@@ -210,7 +210,7 @@ workflows:
       # - check-docker-db-image:
       #     requires:
       #       - build
-      - deploy-qa:
+      - deploy-qa
           # requires:
           #   - lint
           #   - tests
