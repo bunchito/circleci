@@ -27,7 +27,7 @@ executors:
 parameters:
   project_name:
     type: string
-    default: bandera
+    default: xolo
   aws_region:
     type: string
     default: us-east-1
@@ -153,6 +153,7 @@ jobs:
           command: |
             echo 'export IMG_TAG=$(jq .project.version version.json)' >> $BASH_ENV
             source $BASH_ENV
+            echo << pipeline.parameters.project_name >>$IMG_TAG$$(echo $CIRCLE_SHA1 | cut -c -7)
       - run: 
           name: Get version from env variables
           command: echo $IMG_TAG
