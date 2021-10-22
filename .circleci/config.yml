@@ -5,6 +5,7 @@ orbs:
     orbs:
       node: circleci/node@2.0.3
       slack: circleci/slack@3.4.2
+      jq: circleci/jq@2.2.0
 
     executors:
       node:
@@ -117,7 +118,10 @@ orbs:
         executor: <<parameters.executor>>
         steps:
           - checkout
-          - run: echo "deploying from qa"
+          - jq/install
+          - run: |
+              version = $(jq .project.version ../version.json)
+              echo version
 
 
 
