@@ -153,7 +153,7 @@ jobs:
             and:
               - equal: [ master, << pipeline.git.branch >> ]
           steps:
-            - run: echo "This is master..."
+            - run: echo "This is master......"
       - run: 
           name: Read version and set it as env variable
           command: |
