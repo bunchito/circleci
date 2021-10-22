@@ -1,138 +1,209 @@
 version: 2.1
 
 orbs:
-  node:
-    orbs:
-      node: circleci/node@2.0.3
-      slack: circleci/slack@3.4.2
-      jq: circleci/jq@2.2.0
+  slack: circleci/slack@3.4.2
+  jq: circleci/jq@2.2.0
 
-    executors:
-      node:
-        parameters:
-          version:
-            type: string
-            default: lts
-        docker:
-          - image: circleci/node:<<parameters.version>>
+executors:
+  custom-executor:
+    docker:
+      - image: circleci/node:lts-browsers
+  node-with-postgres:
+    parameters:
+      node-version:
+        type: string
+        default: lts
+      postgres-version:
+        type: string
+        default: '13.2'
+    docker:
+      - image: circleci/node:<<parameters.node-version>>
+      - image: postgres:<<parameters.postgres-version>>
+        environment:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          PGPORT: 2345
 
-    commands:
-      build-workspace:
-        description: Run build steps and persist to workspace
-        parameters:
-          with-npm-run-ci-build:
-            type: boolean
-            default: true
-        steps:
-          - checkout
-          - node/install-packages:
-              with-cache: true
-              include-branch-in-cache-key: false
-              cache-version: v1
-              cache-key: package-lock.json
-          - when:
-              condition: << parameters.with-npm-run-ci-build >>
-              steps:
-                - run: npm run build
-          - persist_to_workspace:
-              root: ./
-              paths:
-                - ./*
+parameters:
+  project_name:
+    type: string
+    default: bandera
+  aws_region:
+    type: string
+    default: us-east-1
 
-      with-workspace:
-        description: Run commands with workspace attached
-        parameters:
-          steps:
-            type: steps
-        steps:
-          - attach_workspace:
-              at: ./
-          - steps: << parameters.steps >>
+jobs:
+  # build:
+  #   executor: custom-executor
+  #   steps:
+  #     - checkout
+  #     - setup_remote_docker
+  #     - restore_cache:
+  #         key: dependency-cache-{{ checksum "core/package-lock.json" }}
+  #     - run:
+  #         name: Installing local dependencies
+  #         command: |
+  #           cd core
+  #           npm install
+  #           cd ../tests
+  #           npm install
+  #           cd ../database
+  #           npm install
+  #     - save_cache:
+  #         key: dependency-cache-{{ checksum "core/package-lock.json" }}
+  #         paths:
+  #           - core/node_modules
+  #     - persist_to_workspace:
+  #         root: /home/circleci/project
+  #         paths:
+  #           - core
+  #           - tests
+  #           - database
+  #     - slack/status:
+  #         fail_only: true
 
-      audit:
-        steps:
-          - run: |
-              pwd
-              ls
-              npm version
-              for n in {1..5}; do
-                audit=`npm --color always audit --production 2>&1`
-                echo "$audit"
-                if [[ "$audit" != *"ENOAUDIT"* ]]; then
-                  break
-                fi
-              done
-    jobs:
-      build-workspace:
-        parameters:
-          executor:
-            type: string
-            default: node
-        executor: <<parameters.executor>>
-        steps:
-          - build-workspace
-          - slack/status:
-              fail_only: true
+  # tests:
+  #   executor: node-with-postgres
+  #   steps:
+  #     - checkout
+  #     - setup_remote_docker
+  #     - attach_workspace:
+  #         at: /home/circleci/project
+  #     - run:
+  #         name: Migrations test
+  #         command: |
+  #           cd database
+  #           npm run db:migrate
+  #     - run:
+  #         name: Core tests
+  #         command: |
+  #           cd core/
+  #           npm test
+  #     - run:
+  #         name: Integration API tests
+  #         command: |
+  #           cd core/
+  #           npm run build
+  #           cd ../tests/
+  #           ls -a
+  #           npm test
+  #     - slack/status:
+  #         fail_only: true
 
-      lint-workspace:
-        parameters:
-          executor:
-            type: string
-            default: node
-        executor: <<parameters.executor>>
-        steps:
-          - with-workspace:
-              steps:
-                - run: npm run lint
-                - slack/status:
-                    fail_only: true
+  # check-docker-image:
+  #   executor: custom-executor
+  #   steps:
+  #     - checkout
+  #     - setup_remote_docker
+  #     - attach_workspace:
+  #         at: /home/circleci/project
+  #     - run:
+  #         name: Build docker image with NO cache
+  #         command: |
+  #           cd core
+  #           docker build --no-cache -t << pipeline.parameters.project_name >>:latest .
+  #     - slack/status:
+  #         fail_only: true
 
-      test-workspace:
-        parameters:
-          executor:
-            type: string
-            default: node
-        executor: <<parameters.executor>>
-        steps:
-          - checkout
-          - run: echo "this is the test job"
+  # lint:
+  #   executor: custom-executor
+  #   steps:
+  #     - checkout
+  #     - attach_workspace:
+  #         at: /home/circleci/project
+  #     - run:
+  #         name: Lint
+  #         command: |
+  #           cd core
+  #           npm install
+  #           npm run lint
+  #     - slack/status:
+  #         fail_only: true
 
-      audit-workspace:
-        parameters:
-          executor:
-            type: string
-            default: node
-        executor: <<parameters.executor>>
-        steps:
-          - with-workspace:
-              steps:
-                - audit
-                - slack/status:
-                    fail_only: true
+  # check-docker-db-image:
+  #   executor: custom-executor
+  #   steps:
+  #     - checkout
+  #     - setup_remote_docker
+  #     - attach_workspace:
+  #         at: /home/circleci/project
+  #     - run:
+  #         name: Build docker database image with NO cache
+  #         command: |
+  #           cd database
+  #           docker build --no-cache -t << pipeline.parameters.project_name >>-db:latest .
+  #     - slack/status:
+  #         fail_only: true
 
-      deploy-docker-image-qa:
-        parameters:
-          executor:
-            type: string
-            default: node
-        executor: <<parameters.executor>>
-        steps:
-          - checkout
-          - jq/install
-          - run: |
-              version = $(jq .project.version ../version.json)
-              echo version
-
-
+  deploy-qa:
+    executor: custom-executor
+    docker:
+      - image: cimg/python:3.7-node
+    steps:
+      - checkout
+      - setup_remote_docker
+      - attach_workspace:
+          at: /home/circleci/project
+      - jq/install
+      - run: 
+          name: Read version and set it as env variable
+          command: |
+            version = $(jq .project.version ../version.json)
+            echo version
+            echo 'export DOCKER_VERSION=version' >> $BASH_ENV
+      - run: 
+          name: Get version from env variables
+          command: echo $DOCKER_VERSION
+      # - run:
+      #     name: Build docker image with NO cache
+      #     command: |
+      #       cd core
+      #       docker build --no-cache -t << pipeline.parameters.project_name >>:latest .
+      # - run:
+      #     name: Tag the docker image
+      #     command: docker tag << pipeline.parameters.project_name >>:latest $AWS_ACCOUNT.dkr.ecr.<< pipeline.parameters.aws_region >>.amazonaws.com/<< pipeline.parameters.project_name >>:latest
+      # - run:
+      #     name: Install AWS cli
+      #     command: |
+      #       curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+      #       unzip awscliv2.zip
+      #       sudo ./aws/install
+      #       aws --version
+      # - run:
+      #     name: Push image to ECR
+      #     command: |
+      #       aws --version
+      #       aws ecr get-login-password --region << pipeline.parameters.aws_region >> | docker login --username AWS --password-stdin $AWS_ACCOUNT.dkr.ecr.<< pipeline.parameters.aws_region >>.amazonaws.com
+      #       docker push $AWS_ACCOUNT.dkr.ecr.<< pipeline.parameters.aws_region >>.amazonaws.com/<< pipeline.parameters.project_name >>:latest
+      # - run: sleep 25
+      # - run:
+      #     name: Tasks
+      #     command: aws ecs update-service --cluster qa-<< pipeline.parameters.project_name >> --service qa-<< pipeline.parameters.project_name >> --task-definition qa-<< pipeline.parameters.project_name >> --force-new-deployment --desired-count 2 --region << pipeline.parameters.aws_region >>
+      # - slack/status:
+      #     fail_only: true
 
 workflows:
-  version: 2.1
-  build-test-deploy:
+  version: 2
+  build_test_deploy:
     jobs:
-      - node/test-workspace
-      - node/deploy-docker-image-qa:
-          requires:
-            - node/test-workspace
+      # - build
+      # - lint:
+      #     requires:
+      #       - build
+      # - tests:
+      #     requires:
+      #       - build
+      # - check-docker-image:
+      #     requires:
+      #       - build
+      # - check-docker-db-image:
+      #     requires:
+      #       - build
+      - deploy-qa:
+          # requires:
+          #   - lint
+          #   - tests
+          #   - check-docker-image
           filters:
             branches:
-              only: main/feature-xolo-perf
+              only: master
