@@ -151,10 +151,10 @@ jobs:
       - run: 
           name: Read version and set it as env variable
           command: |
-            export DOCKER_VERSION=$(jq .project.version version.json)
+            export IMG_TAG=$(jq .project.version version.json)
       - run: 
           name: Get version from env variables
-          command: echo $DOCKER_VERSION
+          command: echo $IMG_TAG
       # - run:
       #     name: Build docker image with NO cache
       #     command: |
