@@ -215,6 +215,6 @@ workflows:
           #   - lint
           #   - tests
           #   - check-docker-image
-          filters:
-            branches:
-              only: master
+          # filters:
+          #   branches:
+          #     only: master
