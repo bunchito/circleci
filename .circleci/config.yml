@@ -146,6 +146,9 @@ jobs:
           at: /home/circleci/project
       - jq/install
       - run: 
+          name: ls
+          command: ls
+      - run: 
           name: Read version and set it as env variable
           command: |
             version = $(jq .project.version version.json)
