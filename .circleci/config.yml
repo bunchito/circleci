@@ -1,0 +1,129 @@
+version: 2.1
+
+orbs:
+  node:
+    orbs:
+      node: circleci/node@2.0.3
+      slack: circleci/slack@3.4.2
+
+    executors:
+      node:
+        parameters:
+          version:
+            type: string
+            default: lts
+        docker:
+          - image: circleci/node:<<parameters.version>>
+
+    commands:
+      build-workspace:
+        description: Run build steps and persist to workspace
+        parameters:
+          with-npm-run-ci-build:
+            type: boolean
+            default: true
+        steps:
+          - checkout
+          - node/install-packages:
+              with-cache: true
+              include-branch-in-cache-key: false
+              cache-version: v1
+              cache-key: package-lock.json
+          - when:
+              condition: << parameters.with-npm-run-ci-build >>
+              steps:
+                - run: npm run build
+          - persist_to_workspace:
+              root: ./
+              paths:
+                - ./*
+
+      with-workspace:
+        description: Run commands with workspace attached
+        parameters:
+          steps:
+            type: steps
+        steps:
+          - attach_workspace:
+              at: ./
+          - steps: << parameters.steps >>
+
+      audit:
+        steps:
+          - run: |
+              pwd
+              ls
+              npm version
+              for n in {1..5}; do
+                audit=`npm --color always audit --production 2>&1`
+                echo "$audit"
+                if [[ "$audit" != *"ENOAUDIT"* ]]; then
+                  break
+                fi
+              done
+    jobs:
+      build-workspace:
+        parameters:
+          executor:
+            type: string
+            default: node
+        executor: <<parameters.executor>>
+        steps:
+          - build-workspace
+          - slack/status:
+              fail_only: true
+
+      lint-workspace:
+        parameters:
+          executor:
+            type: string
+            default: node
+        executor: <<parameters.executor>>
+        steps:
+          - with-workspace:
+              steps:
+                - run: npm run lint
+                - slack/status:
+                    fail_only: true
+
+      test-workspace:
+        parameters:
+          executor:
+            type: string
+            default: node
+        executor: <<parameters.executor>>
+        steps:
+          - checkout
+          - run: echo "this is the test job"
+
+      audit-workspace:
+        parameters:
+          executor:
+            type: string
+            default: node
+        executor: <<parameters.executor>>
+        steps:
+          - with-workspace:
+              steps:
+                - audit
+                - slack/status:
+                    fail_only: true
+
+      deploy-docker-image-qa:
+        parameters:
+          executor:
+            type: string
+            default: node
+        executor: <<parameters.executor>>
+        steps:
+          - checkout
+          - run: echo "deploying from qa"
+
+
+
+workflows:
+  version: 2.1
+  build-test-deploy:
+    jobs:
+      - node/test-workspace
+      - node/deploy-docker-image-qa
