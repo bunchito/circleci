@@ -152,6 +152,7 @@ jobs:
           name: Read version and set it as env variable
           command: |
             echo 'export IMG_TAG=$(jq .project.version version.json)' $BASH_ENV
+            source $BASH_ENV
       - run: 
           name: Get version from env variables
           command: echo $IMG_TAG
