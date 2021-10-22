@@ -153,7 +153,7 @@ jobs:
           command: |
             echo 'export IMG_TAG=$(jq .project.version version.json)' >> $BASH_ENV
             source $BASH_ENV
-            echo << pipeline.parameters.project_name >>$IMG_TAG$$(echo $CIRCLE_SHA1 | cut -c -7)
+            echo << pipeline.parameters.project_name >>$IMG_TAG$(echo $CIRCLE_SHA1 | cut -c -7)
       - run: 
           name: Get version from env variables
           command: echo $IMG_TAG
