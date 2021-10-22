@@ -148,7 +148,7 @@ jobs:
       - run: 
           name: Read version and set it as env variable
           command: |
-            version = $(jq .project.version ../version.json)
+            version = $(jq .project.version version.json)
             echo version
             echo 'export DOCKER_VERSION=version' >> $BASH_ENV
       - run: 
