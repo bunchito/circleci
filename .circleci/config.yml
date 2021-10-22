@@ -152,12 +152,14 @@ jobs:
           name: Read version and set it as env variable
           command: |
             echo 'export PROJECT_VERSION=$(jq .project.version version.json -r)' >> $BASH_ENV
-            echo 'export PROJECT_VERSION=<< pipeline.parameters.project_name >>-$PROJECT_VERSION-$(echo $CIRCLE_SHA1 | cut -c -7)' >> $BASH_ENV
+            echo 'export IMG_TAG=<< pipeline.parameters.project_name >>-$PROJECT_VERSION-$(echo $CIRCLE_SHA1 | cut -c -7)' >> $BASH_ENV
             source $BASH_ENV
             echo << pipeline.parameters.project_name >>$PROJECT_VERSION$(echo $CIRCLE_SHA1 | cut -c -7)
       - run: 
           name: Get version from env variables
-          command: echo $PROJECT_VERSION
+          command: | 
+            echo $PROJECT_VERSION
+            echo $IMG_TAG
       # - run:
       #     name: Build docker image with NO cache
       #     command: |
