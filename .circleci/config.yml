@@ -126,4 +126,9 @@ workflows:
   build-test-deploy:
     jobs:
       - node/test-workspace
-      - node/deploy-docker-image-qa
+      - node/deploy-docker-image-qa:
+          requires:
+            - node/test-workspace
+          filters:
+            branches:
+              only: main/feature-xolo-perf
