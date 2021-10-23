@@ -156,6 +156,9 @@ jobs:
             source $BASH_ENV
             echo $COMM
             echo $DEPENDABOT
+            [[ $DEPENDABOT =~ (^|[^[:alnum:]_])Bump([^[:alnum:]_]|$) ]] && echo 'export DEPENDABOT_TAG=-dependabot' >> $BASH_ENV
+            source $BASH_ENV
+            echo $DEPENDABOT_TAG
       - when:
           condition:
               or:
