@@ -147,7 +147,7 @@ jobs:
       - jq/install
       - run: 
           name: ls
-          command: ls
+          command: ls -a
       - run:
           name: Regex
           command: |
