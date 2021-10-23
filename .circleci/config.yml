@@ -141,9 +141,9 @@ jobs:
       - image: cimg/python:3.7-node
     steps:
       - checkout
-      - setup_remote_docker
-      - attach_workspace:
-          at: /home/circleci/project
+      # - setup_remote_docker
+      # - attach_workspace:
+      #     at: /home/circleci/project
       - jq/install
       - run: 
           name: ls
@@ -162,7 +162,7 @@ jobs:
             echo 'export PROJECT_VERSION=$(jq .project.version core/version.json -r)' >> $BASH_ENV
             echo 'export COMMIT=$(echo $CIRCLE_SHA1 | cut -c -7)' >> $BASH_ENV
             echo 'export COMMIT_MSG=$(git log --format=oneline -n 1 $COMMIT)' >> $BASH_ENV
-            [[ $COMMIT_MSG =~ (^|[^[:alnum:]_])Bump([^[:alnum:]_]|$) ]] && echo 'export DEPENDABOT_TAG=-dependabot' >> $BASH_ENV
+            [[ $COMMIT_MSG =~ (^|[^[:alnum:]_])Bump([^[:alnum:]_]|$) ]] && echo 'export DEPENDABOT_TAG=\-dependabot' >> $BASH_ENV
             echo 'export IMG_TAG=<< pipeline.parameters.project_name >>-$PROJECT_VERSION-$COMMIT$DEPENDABOT_TAG' >> $BASH_ENV
             source $BASH_ENV
             echo $PROJECT_VERSION-$COMMIT$DEPENDABOT_TAG
