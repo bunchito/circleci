@@ -150,7 +150,9 @@ jobs:
           command: ls
       - when:
           condition:
-            equal: [ master, << pipeline.git.branch >> ]
+              or:
+                - equal: [ master, << pipeline.git.branch >> ]
+
           steps:
             - run: echo "This is master......"
       - run: 
