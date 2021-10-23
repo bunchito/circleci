@@ -179,7 +179,7 @@ jobs:
           name: Get version from env variables
           command: | 
             echo $PROJECT_VERSION
-            echo $IMG_TAG
+            echo $IMG_TAG$DEPENDABOT_TAG
       # - run:
       #     name: Build docker image with NO cache
       #     command: |
