@@ -152,6 +152,7 @@ jobs:
           name: Regex
           command: |
             echo 'export DEPENDABOT=$(git log --format=oneline -n 1 $(echo $CIRCLE_SHA1 | cut -c -7))' >> $BASH_ENV
+            source $BASH_ENV
             echo $DEPENDABOT
       - when:
           condition:
