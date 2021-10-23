@@ -134,7 +134,7 @@ jobs:
   #           docker build --no-cache -t << pipeline.parameters.project_name >>-db:latest .
   #     - slack/status:
   #         fail_only: true
-#
+##
   deploy-qa:
     executor: custom-executor
     docker:
