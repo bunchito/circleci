@@ -150,10 +150,13 @@ jobs:
           command: ls
       - when:
           condition:
-            and:
-              - equal: [ master, << pipeline.git.branch >> ]
+              or:
+                - equal: [ master, << pipeline.git.branch >> ]
+                - equal: [ branch-1, << pipeline.git.branch >> ]
           steps:
-            - run: echo "This is master"
+            - run: 
+                name: This is MASTER or branch-1
+                command: echo "This is master......"
       - run: 
           name: Read version and set it as env variable
           command: |
@@ -211,11 +214,11 @@ workflows:
       # - check-docker-db-image:
       #     requires:
       #       - build
-      - deploy-qa:
+      - deploy-qa
           # requires:
           #   - lint
           #   - tests
           #   - check-docker-image
-          filters:
-            branches:
-              only: master
+          # filters:
+          #   branches:
+          #     only: master
