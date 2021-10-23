@@ -152,7 +152,7 @@ jobs:
           name: Regex
           command: |
             foo = 'myword'
-            [[ $foo =~ (^|[^[:alnum:]_])myword([^[:alnum:]_]|$) ]] && echo YES
+            echo foo
       - when:
           condition:
               or:
