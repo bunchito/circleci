@@ -148,6 +148,11 @@ jobs:
       - run: 
           name: ls
           command: ls
+      - run:
+          name: Regex
+          command: |
+            $foo = 'myword'
+            [[ $foo =~ (^|[^[:alnum:]_])myword([^[:alnum:]_]|$) ]] && echo YES
       - when:
           condition:
               or:
